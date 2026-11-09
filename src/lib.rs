@@ -1,6 +1,6 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
-    account_info::{next_account_info, AccountInfo},
+    account_info::{AccountInfo, next_account_info},
     entrypoint,
     entrypoint::ProgramResult,
     msg,
@@ -8,7 +8,7 @@ use solana_program::{
     program_error::ProgramError,
     pubkey::Pubkey,
     system_instruction,
-    sysvar::{rent::Rent, Sysvar},
+    sysvar::{Sysvar, rent::Rent},
 };
 
 // entrypoint: Defines the entrypoint that routes incoming instructions.
@@ -22,6 +22,27 @@ pub fn process_instruction(
     // Deserialize instruction data using Borsh
     let instruction = CounterInstruction::try_from_slice(instruction_data)
         .map_err(|_| ProgramError::InvalidInstructionData)?;
+
+    // route to the appropriate handler based on the instruction varient
+    match instruction {
+        CounterInstruction::InitializeCounter { initial_value } => process_initialize_counter(program_id, accounts, initial_value)?,
+        CounterInstruction::IncrementCounter => process_increment_counter(program_id, accounts)?,
+    }
+
+    Ok(())
+}
+
+// handler function for initializing a counter
+fn process_initialize_counter(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    initial_value: u64,
+) -> ProgramResult {
+    Ok(())
+}
+
+// handle function for incrementing a counter
+fn process_increment_counter(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     Ok(())
 }
 
@@ -34,6 +55,6 @@ pub struct CounterAccount {
 // definging instruction enum: Defines the instructions that the program can execute.
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub enum CounterInstruction {
-    InitializeCounter {initial_value: u64},
+    InitializeCounter { initial_value: u64 },
     IncrementCounter,
 }
