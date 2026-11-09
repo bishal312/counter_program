@@ -73,7 +73,7 @@ fn process_initialize_counter(
 
     // initialize the counter data
     let counter_data = CounterAccount {
-        counter: initial_value,
+        count: initial_value,
     };
 
     // serialize and write  the data to the account
@@ -86,13 +86,39 @@ fn process_initialize_counter(
 
 // handle function for incrementing a counter
 fn process_increment_counter(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+
+    // get the counter account to increment
+    let counter_account = next_account_info(account_iter)?;
+
+    // security check: verifying this program owns the account
+    if counter_account.owner != program_id {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    // get a mutable reference to the account's data
+    let mut data = counter_account.data.borrow_mut();
+
+    // deserialize the current counter value
+    let mut counter_data: CounterAccount = CounterAccount::try_from_slice(&data)?;
+
+    // increment the counter value
+    counter_data.count = counter_data
+        .count
+        .checked_add(1)
+        .ok_or(ProgramError::InvalidAccountData)?;
+
+    // serialize the updated data back to the account
+    counter_data.serialize(&mut &mut data[..])?;
+
+    msg!("Counter incremented to: {}", counter_data.count);
     Ok(())
 }
 
 // defining program state: Defines program state (account data).
 #[derive(BorshDeserialize, BorshSerialize, Debug)]
 pub struct CounterAccount {
-    pub counter: u64,
+    pub count: u64,
 }
 
 // definging instruction enum: Defines the instructions that the program can execute.
