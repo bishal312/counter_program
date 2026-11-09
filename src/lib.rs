@@ -40,24 +40,29 @@ fn process_initialize_counter(
     accounts: &[AccountInfo],
     initial_value: u64,
 ) -> ProgramResult {
+    // account iterator
     let accounts_iter = &mut accounts.iter();
 
-    let counter_account = next_account_info(accounts_iter)?;
-    let payer_account = next_account_info(accounts_iter)?;
-    let system_program = next_account_info(accounts_iter)?;
+    // extraction of required accounts in order
+    let counter_account = next_account_info(accounts_iter)?; // new counter account
+    let payer_account = next_account_info(accounts_iter)?; // who pays for the account
+    let system_program = next_account_info(accounts_iter)?; // system program for cpi
 
-    let account_space = 8;
+    //calculating the space
+    let account_space = 8; // 8bytes for a u64
 
+    // getting the min balance required for rent exemption
     let rent = Rent::get()?;
     let required_lamports = rent.minimum_balance(account_space);
 
+    //creating the counter account via cpi to the system program
     invoke(
         &system_instruction::create_account(
-            payer_account.key,
-            counter_account.key,
-            required_lamports,
-            account_space as u64,
-            program_id,
+            payer_account.key,    // Account paying for creation
+            counter_account.key,  // New account being created
+            required_lamports,    // Lamports to transfer
+            account_space as u64, // Space to allocate in bytes
+            program_id,           // Program that will own this account (our program)
         ),
         &[
             payer_account.clone(),
@@ -66,10 +71,12 @@ fn process_initialize_counter(
         ],
     )?;
 
+    // initialize the counter data
     let counter_data = CounterAccount {
         counter: initial_value,
     };
 
+    // serialize and write  the data to the account
     let mut account_data = &mut counter_account.data.borrow_mut()[..];
     counter_data.serialize(&mut account_data)?;
 
