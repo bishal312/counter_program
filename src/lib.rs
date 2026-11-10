@@ -127,3 +127,32 @@ pub enum CounterInstruction {
     InitializeCounter { initial_value: u64 },
     IncrementCounter,
 }
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use litesvm::LiteSVM;
+use solana_sdk::{
+        account::ReadableAccount,
+        instruction::{AccountMeta, Instruction},
+        message::Message,
+        signature::{keypair,Signer},
+        system_program,
+        transaction::Transaction,
+    };
+
+    #[test]
+    fn test_counter_program() {
+        // creating a new instance of the solana vm for testing
+        let mut svm = LiteSVM::new();
+
+        // creating a keypair for the transaction payer
+        let payer = keypair::new();
+
+        //Fund the payer account with 1 SOL ( 1 billion lamports)
+        // This is needed to pay for transactionfee and account creation
+        svm.airdrop(&payer.pubkey, 1_000_000_000)
+            .expect("Failed to airdrop");
+    }
+}
