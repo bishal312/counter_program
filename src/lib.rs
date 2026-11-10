@@ -3,11 +3,11 @@ use solana_program::{
     account_info::{AccountInfo, next_account_info},
     entrypoint,
     entrypoint::ProgramResult,
-    example_mocks::solana_sdk::system_instruction,
     msg,
     program::invoke,
     program_error::ProgramError,
     pubkey::Pubkey,
+    system_instruction,
     sysvar::{Sysvar, rent::Rent},
 };
 
@@ -133,6 +133,7 @@ pub enum CounterInstruction {
 mod test {
     use super::*;
     use litesvm::LiteSVM;
+use solana_program::example_mocks::{solana_keypair::Keypair, solana_signer::Signer};
 use solana_sdk::{
         account::ReadableAccount,
         instruction::{AccountMeta, Instruction},
@@ -154,5 +155,15 @@ use solana_sdk::{
         // This is needed to pay for transactionfee and account creation
         svm.airdrop(&payer.pubkey, 1_000_000_000)
             .expect("Failed to airdrop");
+
+        // loading our compiled program into the test environment
+        let program_keypair = Keypair::new();
+        let program_id = program_keypair.pubkey();
+
+        // loading the compiled program
+        svm.add_program_from_file(
+            program_id,
+            "target/deploy/counter_program.so"
+        ).expect("Failed to load program");
     }
 }
