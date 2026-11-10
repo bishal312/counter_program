@@ -131,7 +131,9 @@ pub enum CounterInstruction {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use std::result;
+
+use super::*;
     use litesvm::LiteSVM;
 use solana_program::example_mocks::{solana_keypair::Keypair, solana_signer::Signer};
 use solana_sdk::{
@@ -215,6 +217,44 @@ use solana_sdk::{
         assert_eq!(counter.count, 42);
         println!("Counter initialized successfully");
 
+
+        // step2: Increment the counter
+        println!("Testing counter increment...");
+
+        // use borsh serialization for increment instruction
+        let increment_data = borsh::to_vec(&CounterInstruction::IncrementCounter)
+            .expect("Failed to serialize instruction");
+
+        let increment_instruction = Instruction::new_with_bytes(
+            program_id,
+            &increment_data,
+            vec![AccountMeta::new(counter_keypair.pubkey(), true)],            
+            );
+
+        // build and send increment transaction
+        let message = Message::new(&[increment_instruction], Some(&payer.pubkey()));
+        let transaction = Transaction::new(
+            &[&payer, &counter_keypair],
+            message,
+            svm.latest_blockhash(),
+        );
+
+        let result = svm.send_transaction(transaction);
+        assert!(result.is_ok(), "Increment transaction should succeed");
+
+        let logs = result.unwrap().logs;
+        println!("Transaction logs:\n{:#?}", logs);
+
+        // checking acount data
+        let account = svm
+            .get_account(&counter_keypair.putkey())
+            .expect("Failed to get counter account");
+
+        let counter: CounterAccount = CounterAccount::try_from_slice(account.data())
+            .expect("Failed to serialize counter data");
+
+        assert_eq!(counter.count, 43);
+        println!("Counter incremented successfully");
 
     }
 }
