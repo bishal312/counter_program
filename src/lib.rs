@@ -153,7 +153,7 @@ use solana_sdk::{
 
         //Fund the payer account with 1 SOL ( 1 billion lamports)
         // This is needed to pay for transactionfee and account creation
-        svm.airdrop(&payer.pubkey, 1_000_000_000)
+        svm.airdrop(&payer.pubkey(), 1_000_000_000)
             .expect("Failed to airdrop");
 
         // loading our compiled program into the test environment
@@ -165,5 +165,30 @@ use solana_sdk::{
             program_id,
             "target/deploy/counter_program.so"
         ).expect("Failed to load program");
+
+        // step1: init the counter
+        let counter_keypair = keypair::new();
+        let initial_value: u64 = 42;
+        
+        println!("Testing counter initialization...");
+
+        // use borsh serialization for the instruction
+        let init_instruction_data = borsh::to_vec(&CounterInstruction::InitializeCounter { initial_value })
+            .expect("Failed to serialize instruction");
+
+        let initialize_instruction = Instruction::new_with_bytes(
+            program_id,
+            &init_instruction_data,
+            vec![
+                // account1: Counter account (signer, writable)
+                AccountMeta::new(counter_keypair.pubkey(), true),
+                // account2: Payer (signer, writable)
+                AccountMeta::new(payer.pubkey(), true),
+                // account3: System program (not signer, not writable)
+                AccountMeta::new_readonly(system_program::id(), false),
+            ],
+        );
+
+        
     }
 }
