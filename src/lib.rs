@@ -202,5 +202,19 @@ use solana_sdk::{
 
         let logs = result.unwrap().logs;
         println!("Transaction log: \n{:#?}", logs);
+
+        // checking account data after initialization
+        let account = svm
+            .get_account(&counter_keypair.pubkey())
+            .expect("Failed to get counter account");
+
+        // deserialize and verify the counter data
+        let counter: CounterAccount = CounterAccount::try_from_slice(account.data())
+            .expect("Failed to deserialize counter data");
+
+        assert_eq!(counter.count, 42);
+        println!("Counter initialized successfully");
+
+
     }
 }
