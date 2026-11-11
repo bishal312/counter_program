@@ -135,7 +135,6 @@ mod test {
 
 use super::*;
     use litesvm::LiteSVM;
-use solana_program::example_mocks::{solana_keypair::Keypair, solana_signer::Signer};
 use solana_sdk::{
         account::ReadableAccount,
         instruction::{AccountMeta, Instruction},
